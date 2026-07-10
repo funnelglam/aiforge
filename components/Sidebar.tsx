@@ -1,28 +1,45 @@
-export default function Sidebar() {
+import { Chat } from "@/types/chat";
+
+type Props = {
+  chats: Chat[];
+  activeChat: string;
+  onSelect: (id: string) => void;
+  onNewChat: () => void;
+};
+
+export default function Sidebar({
+  chats,
+  activeChat,
+  onSelect,
+  onNewChat,
+}: Props) {
   return (
     <aside className="w-72 bg-zinc-950 border-r border-zinc-800 p-5">
 
-      <button className="w-full rounded-xl bg-white text-black py-3 font-semibold">
+      <button
+        onClick={onNewChat}
+        className="w-full rounded-xl bg-white text-black py-3 font-semibold"
+      >
         + New Chat
       </button>
 
-      <h2 className="mt-8 text-sm uppercase text-zinc-400">
-        Recent Chats
-      </h2>
+      <div className="mt-8 space-y-2">
 
-      <div className="mt-4 space-y-2">
+        {chats.map(chat => (
 
-        <div className="rounded-lg bg-zinc-900 p-3 cursor-pointer hover:bg-zinc-800">
-          Restaurant Marketing
-        </div>
+          <button
+            key={chat.id}
+            onClick={() => onSelect(chat.id)}
+            className={`w-full text-left rounded-lg p-3 transition ${
+              activeChat === chat.id
+                ? "bg-zinc-700"
+                : "bg-zinc-900 hover:bg-zinc-800"
+            }`}
+          >
+            {chat.title}
+          </button>
 
-        <div className="rounded-lg bg-zinc-900 p-3 cursor-pointer hover:bg-zinc-800">
-          Logo Design
-        </div>
-
-        <div className="rounded-lg bg-zinc-900 p-3 cursor-pointer hover:bg-zinc-800">
-          Menu Creator
-        </div>
+        ))}
 
       </div>
 

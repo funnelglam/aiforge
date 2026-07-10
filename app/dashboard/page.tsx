@@ -2,60 +2,98 @@
 
 import { useState } from "react";
 
+import Header from "../components/Header";
+import Sidebar from "../components/Sidebar";
+import ChatWindow from "../components/ChatWindow";
+import PromptBox from "../components/PromptBox";
+
+import { Chat } from "@/types/chat";
+
 export default function Dashboard() {
-  const [prompt, setPrompt] = useState("");
-  const [answer, setAnswer] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [chats, setChats] = useState<Chat[]>([
+    {
+      id: crypto.randomUUID(),
+      title: "New Chat",
+      messages: [
+        {
+          role: "assistant",
+          text: "👋 Welcome to AIForge!",
+        },
+      ],
+    },
+  ]);
 
-  async function generate() {
-    if (!prompt.trim()) return;
+  const [activeChat, setActiveChat] = useState(chats[0].id);
 
-    setLoading(true);
+  const currentChat = chats.find(c => c.id === activeChat)!;
 
-    const res = await fetch("/api/chat", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        prompt,
-      }),
-    });
+  function sendMessage(prompt: string) {
+    setChats(prev =>
+      prev.map(chat => {
+        if (chat.id !== activeChat) return chat;
 
-   const data = await res.json();
+        return {
+          ...chat,
+          title:
+            chat.title === "New Chat"
+              ? prompt.slice(0, 30)
+              : chat.title,
 
-if (!res.ok) {
-  setAnswer("❌ " + data.error);
-  setLoading(false);
-  return;
-}
+          messages: [
+            ...chat.messages,
+            {
+              role: "user",
+              text: prompt,
+            },
+            {
+              role: "assistant",
+              text:
+                "🤖 Mock AI: We'll replace this with GPT-5 later.",
+            },
+          ],
+        };
+      })
+    );
+  }
 
-setAnswer(data.output);
+  function createChat() {
+    const newChat: Chat = {
+      id: crypto.randomUUID(),
+      title: "New Chat",
+      messages: [
+        {
+          role: "assistant",
+          text: "👋 New conversation started.",
+        },
+      ],
+    };
+
+    setChats(prev => [...prev, newChat]);
+    setActiveChat(newChat.id);
   }
 
   return (
-    <main className="min-h-screen bg-black text-white p-10">
+    <main className="h-screen bg-black text-white flex flex-col">
 
-      <h1 className="text-5xl font-bold mb-8">
-        AIForge 🚀
-      </h1>
+      <Header />
 
-      <textarea
-        value={prompt}
-        onChange={(e) => setPrompt(e.target.value)}
-        placeholder="What do you want to create today?"
-        className="w-full rounded-xl bg-zinc-900 p-5 h-40"
-      />
+      <div className="flex flex-1 overflow-hidden">
 
-      <button
-        onClick={generate}
-        className="mt-5 rounded-xl bg-white text-black px-8 py-3 font-bold"
-      >
-        {loading ? "Generating..." : "Generate 🚀"}
-      </button>
+        <Sidebar
+          chats={chats}
+          activeChat={activeChat}
+          onSelect={setActiveChat}
+          onNewChat={createChat}
+        />
 
-      <div className="mt-10 rounded-xl bg-zinc-900 p-6 whitespace-pre-wrap">
-        {answer}
+        <div className="flex flex-col flex-1">
+
+          <ChatWindow messages={currentChat.messages} />
+
+          <PromptBox onSend={sendMessage} />
+
+        </div>
+
       </div>
 
     </main>
