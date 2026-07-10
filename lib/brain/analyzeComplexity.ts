@@ -1,19 +1,8 @@
-import { Complexity } from "./types";
+export function analyzeComplexity(prompt: string) {
+  const words = prompt.trim().split(/\s+/).length;
 
-export function analyzeComplexity(
-  prompt: string
-): Complexity {
+  if (words < 10) return "low";
+  if (words < 40) return "medium";
 
-  const words =
-    prompt.trim().split(/\s+/).length;
-
-  if (words < 20) {
-    return "simple";
-  }
-
-  if (words < 80) {
-    return "medium";
-  }
-
-  return "complex";
+  return "high";
 }
