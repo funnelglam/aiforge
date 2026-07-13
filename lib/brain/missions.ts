@@ -1,46 +1,90 @@
-import { Mission } from "./types";
+import { Mission } from "./mission";
 
 export const missions: Mission[] = [
   {
     id: "business",
-    title: "Launch a Business",
-    icon: "🚀",
-    description: "Start and grow a business.",
-    tasks: [
-      "Business Strategy",
-      "Brand Name",
-      "Logo Concepts",
-      "Marketing Plan",
-      "Social Media",
-      "Website",
-      "Promotional Materials",
-    ],
+    goal: "Launch or grow a business",
+    workspace: "BusinessStudio",
+    provider: "openai",
+    complexity: "Advanced",
+    quality: "Best",
+    steps: [
+  {
+    id: 1,
+    title: "Analyze the business goal",
+    status: "waiting",
+    provider: "openai",
   },
+  {
+    id: 2,
+    title: "Create execution strategy",
+    status: "waiting",
+    provider: "openai",
+  },
+  {
+    id: 3,
+    title: "Generate required assets",
+    status: "waiting",
+    provider: "flux",
+  },
+],
+  },
+
   {
     id: "video",
-    title: "Create Viral Videos",
-    icon: "🎬",
-    description: "Create short-form content.",
-    tasks: [
-      "Video Ideas",
-      "Scripts",
-      "Voiceover",
-      "Video Generation",
-      "Thumbnail",
-      "Publishing Plan",
-    ],
+    goal: "Create a video",
+    workspace: "VideoStudio",
+    provider: "kling",
+    complexity: "Medium",
+    quality: "Best",
+    steps: [
+  {
+    id: 1,
+    title: "Write video script",
+    status: "waiting",
+    provider: "openai",
   },
   {
+    id: 2,
+    title: "Generate storyboard",
+    status: "waiting",
+    provider: "flux",
+  },
+  {
+    id: 3,
+    title: "Generate video",
+    status: "waiting",
+    provider: "kling",
+  },
+],
+  },
+
+  {
     id: "brand",
-    title: "Design a Brand",
-    icon: "🎨",
-    description: "Create a complete visual identity.",
-    tasks: [
-      "Brand Strategy",
-      "Logo",
-      "Color Palette",
-      "Typography",
-      "Brand Guide",
-    ],
+    goal: "Create branding",
+    workspace: "ImageStudio",
+    provider: "flux",
+    complexity: "Medium",
+    quality: "Best",
+    steps: [
+  {
+    id: 1,
+    title: "Analyze brand",
+    status: "waiting",
+    provider: "openai",
+  },
+  {
+    id: 2,
+    title: "Generate logo",
+    status: "waiting",
+    provider: "flux",
+  },
+  {
+    id: 3,
+    title: "Create brand assets",
+    status: "waiting",
+    provider: "flux",
+  },
+],
   },
 ];

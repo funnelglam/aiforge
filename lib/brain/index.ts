@@ -5,36 +5,53 @@ import { createPlan } from "./createPlan";
 import { detectIntent } from "./detectIntent";
 import { detectMission } from "./engine";
 
-export async function processPrompt(
-  prompt: string
-) {
+export function analyzePrompt(prompt: string) {
+
   const intent = detectIntent(prompt);
 
   const mission = detectMission(prompt);
 
-  const complexity =
-    analyzeComplexity(prompt);
+  const complexity = analyzeComplexity(prompt);
 
-  const subscription =
-    checkSubscription();
+  const subscription = checkSubscription();
 
-  const provider =
-    chooseProvider(
-      intent,
-      complexity,
-      subscription
-    );
+  const provider = chooseProvider(
+    intent,
+    complexity,
+    subscription
+  );
 
-  const executionPlan =
-    createPlan(mission);
+  const tasks = createPlan(mission);
 
   return {
-    prompt,
-    intent,
-    mission,
+
+    narrator:
+      mission
+        ? `I understand your goal. I will use the ${mission.id} mission to accomplish it.`
+        : "I understand your request and will generate the best execution plan.",
+
+    missionType:
+      mission?.id ?? "general",
+
     complexity,
-    subscription,
+
+    quality:
+      complexity === "complex"
+        ? "High"
+        : "Standard",
+
     provider,
-    executionPlan,
+
+    tasks,
+
+    executionPlan: tasks,
+
+    prompt,
+
+    intent,
+
+    mission,
+
+    subscription,
   };
 }

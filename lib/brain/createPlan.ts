@@ -1,4 +1,4 @@
-import { Mission } from "./types";
+import { Mission } from "./mission";
 
 export function createPlan(
   mission?: Mission
@@ -8,6 +8,6 @@ export function createPlan(
     return [];
   }
 
-  return mission.tasks;
+  return mission.steps.map(step => step.title);
 
 }
