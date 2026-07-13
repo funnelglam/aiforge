@@ -1,5 +1,6 @@
 "use client";
 
+import { createForgeJob } from "@/lib/forgeJob";
 import { analyzePrompt } from "@/lib/brain";
 import StudioRouter from "./StudioRouter";
 
@@ -9,6 +10,7 @@ type Props = {
 
 export default function StudioManager({ goal }: Props) {
  const brain = analyzePrompt(goal);
+const job = createForgeJob(brain);
 
   return (
     <div className="mt-6 rounded-2xl border border-violet-700/30 bg-gradient-to-r from-violet-950/40 to-zinc-900 p-6">
@@ -82,6 +84,13 @@ export default function StudioManager({ goal }: Props) {
         </InfoCard>
 
       </div>
+<div className="mt-8 rounded-xl bg-zinc-900 p-5">
+  <p className="text-zinc-500">Forge Job</p>
+
+  <pre className="mt-3 overflow-auto text-sm">
+    {JSON.stringify(job, null, 2)}
+  </pre>
+</div>
 
       {/* Original Goal */}
 
