@@ -10,6 +10,8 @@ type Props = {
 
 export default function StudioManager({ goal }: Props) {
  const brain = analyzePrompt(goal);
+ console.log("Goal:", goal);
+console.log(brain);
 const job = createForgeJob(brain);
 
   return (

@@ -2,6 +2,9 @@
 
 import { useState } from "react";
 import { executeJob } from "@/lib/executor";
+import {
+  ExecutionTask,
+} from "@/lib/executor/types";
 
 type Props = {
   brain: any;
@@ -9,10 +12,22 @@ type Props = {
 
 export default function GeneralStudio({ brain }: Props) {
     const [running, setRunning] = useState(false);
-  
-  async function handleMission() {
+
+const [tasks, setTasks] = useState<ExecutionTask[]>(
+  brain.tasks.map((task: string, index: number) => ({
+    id: index + 1,
+    title: task,
+    status: "waiting",
+  }))
+);
+
+async function handleMission() {
   setRunning(true);
-  await executeJob(brain);
+
+  await executeJob(tasks, (updatedTasks) => {
+    setTasks(updatedTasks);
+  });
+
   setRunning(false);
 }
 
@@ -26,16 +41,23 @@ export default function GeneralStudio({ brain }: Props) {
         No specialized studio matched this mission.
       </p>
 
-      <div className="mt-6 space-y-3">
-        {brain.tasks.map((task: string) => (
-          <div
-            key={task}
-            className="rounded-lg bg-zinc-800 p-4"
-          >
-            {task}
-          </div>
-        ))}
-      </div>
+<div className="mt-6 space-y-3">
+  {tasks.map((task) => (
+    <div
+      key={task.id}
+      className="rounded-lg bg-zinc-800 p-4 flex justify-between"
+    >
+      <span>{task.title}</span>
+
+      <span>
+  {task.status === "waiting" && "⚪ Waiting"}
+  {task.status === "running" && "🟡 Running"}
+  {task.status === "completed" && "✅ Completed"}
+  {task.status === "failed" && "🔴 Failed"}
+</span>
+    </div>
+  ))}
+</div>
 
       <button
         onClick={handleMission}
@@ -44,14 +66,6 @@ export default function GeneralStudio({ brain }: Props) {
       >
         {running ? "Running..." : "Start Mission"}
       </button>
-{brain.tasks.map((task: string) => (
-        <div
-          key={task}
-          className="mt-3 rounded-lg bg-zinc-900 p-4 text-white"
-        >
-          {task}
-        </div>
-      ))}
     </div>
   );
 }
