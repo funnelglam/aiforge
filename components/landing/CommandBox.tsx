@@ -12,7 +12,7 @@ const [prompt, setPrompt] = useState("");
 
   sessionStorage.setItem("forgeGoal", prompt);
 
-  router.push("/workspace");
+  router.push("/studio");
 }
 
   return (
