@@ -1,10 +1,24 @@
+import { Complexity, Quality } from "./types";
+
 export function chooseQuality(
-  complexity: string,
-  premium: boolean
-) {
-  if (premium) return "premium";
+  complexity: Complexity,
+  premium = false
+): Quality {
 
-  if (complexity === "high") return "balanced";
+  if (premium) {
+    return "Best";
+  }
 
-  return "fast";
+  switch (complexity) {
+
+    case "complex":
+      return "Best";
+
+    case "medium":
+      return "Balanced";
+
+    case "simple":
+    default:
+      return "Fast";
+  }
 }

@@ -26,6 +26,11 @@ export type Provider =
   | "image"
   | "video";
 
+export type Quality =
+  | "Fast"
+  | "Balanced"
+  | "Best";
+
 export type Mission = {
   id: string;
   title: string;

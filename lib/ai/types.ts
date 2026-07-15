@@ -4,11 +4,21 @@ export type AIProvider =
   | "claude";
 
 export interface AIRequest {
-  provider: AIProvider;
   prompt: string;
+
+  provider?: AIProvider;
+
+  systemPrompt?: string;
+
+  temperature?: number;
+
+  maxTokens?: number;
 }
 
 export interface AIResponse {
   success: boolean;
+
   text: string;
+
+  provider: AIProvider;
 }
