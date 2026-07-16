@@ -5,9 +5,9 @@ export type SubscriptionPlan =
   | "business";
 
 export type Complexity =
-  | "simple"
+  | "low"
   | "medium"
-  | "complex";
+  | "high";
 
 export type Intent =
   | "business"
@@ -31,12 +31,21 @@ export type Quality =
   | "Balanced"
   | "Best";
 
+export type MissionStep = {
+  id: number;
+  title: string;
+  status: "waiting" | "running" | "completed" | "failed";
+  provider: string;
+};
+
 export type Mission = {
   id: string;
-  title: string;
-  icon: string;
-  description: string;
-  tasks: string[];
+  goal: string;
+  workspace: string;
+  provider: string;
+  complexity: string;
+  quality: string;
+  steps: MissionStep[];
 };
 
 export type BrainResult = {

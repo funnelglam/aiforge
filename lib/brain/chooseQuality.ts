@@ -4,20 +4,18 @@ export function chooseQuality(
   complexity: Complexity,
   premium = false
 ): Quality {
-
   if (premium) {
     return "Best";
   }
 
   switch (complexity) {
-
-    case "complex":
+    case "high":
       return "Best";
 
     case "medium":
       return "Balanced";
 
-    case "simple":
+    case "low":
     default:
       return "Fast";
   }

@@ -23,7 +23,7 @@ export function chooseProvider(
     return "gemini";
   }
 
-  if (complexity === "complex") {
+ if (complexity === "high") {
     return "openai";
   }
 

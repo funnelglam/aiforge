@@ -250,3 +250,86 @@ Launch
 One Goal.
 
 Everything Generated.
+# Stability Rules (Added during Phase E)
+
+As AIForge grows, stability is more important than rapid refactoring.
+
+## Naming Stability
+
+Once a function, file, or concept becomes part of the architecture, avoid renaming it unless absolutely necessary.
+
+Official terminology:
+
+- Job
+- executeJob()
+- analyzePrompt()
+- chooseProvider()
+- generateAI()
+- Provider
+- Executor
+- Mission
+- Studio
+
+Complexity Levels:
+
+- simple
+- medium
+- complex
+
+These terms are the official AIForge vocabulary and should remain consistent throughout the project.
+
+---
+
+## Refactoring Rules
+
+When replacing an implementation:
+
+✔ Replace the old implementation completely.
+
+❌ Never leave two versions of the same feature.
+
+Examples:
+
+❌ missionPlan.ts + createPlan.ts
+
+❌ executeMission() + executeJob()
+
+❌ router.ts + chooseProvider()
+
+Only one source of truth should exist.
+
+---
+
+## Folder Responsibility
+
+brain/
+- Analyze goals
+- Detect intent
+- Create execution plans
+
+executor/
+- Execute tasks
+- Track progress
+- Report status
+
+ai/
+- AI Router
+- AI Providers
+- Gateway
+- Prompt Builder
+
+studios/
+- User interface
+- Display progress
+- Display outputs
+
+---
+
+## Architecture First
+
+Before adding a new feature:
+
+1. Check whether the functionality already exists.
+2. Reuse existing modules whenever possible.
+3. Avoid creating duplicate files.
+4. Keep the architecture simple.

@@ -6,7 +6,6 @@ import { detectIntent } from "./detectIntent";
 import { detectMission } from "./engine";
 
 export function analyzePrompt(prompt: string) {
-
   const intent = detectIntent(prompt);
 
   const mission = detectMission(prompt);
@@ -24,19 +23,16 @@ export function analyzePrompt(prompt: string) {
   const tasks = createPlan(mission);
 
   return {
+    narrator: mission
+      ? `I understand your goal. I will use the ${mission.id} mission to accomplish it.`
+      : "I understand your request and will generate the best execution plan.",
 
-    narrator:
-      mission
-        ? `I understand your goal. I will use the ${mission.id} mission to accomplish it.`
-        : "I understand your request and will generate the best execution plan.",
-
-    missionType:
-      mission?.id ?? "general",
+    missionType: mission?.id ?? "general",
 
     complexity,
 
     quality:
-      complexity === "complex"
+      complexity === "high"
         ? "High"
         : "Standard",
 
