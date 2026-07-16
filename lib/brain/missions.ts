@@ -6,7 +6,7 @@ export const missions: Mission[] = [
     goal: "Launch or grow a business",
     workspace: "BusinessStudio",
     provider: "openai",
-    complexity: "Advanced",
+    complexity: "high",
     quality: "Best",
     steps: [
   {
@@ -35,7 +35,7 @@ export const missions: Mission[] = [
     goal: "Create a video",
     workspace: "VideoStudio",
     provider: "kling",
-    complexity: "Medium",
+    complexity: "medium",
     quality: "Best",
     steps: [
   {
@@ -64,7 +64,7 @@ export const missions: Mission[] = [
     goal: "Create branding",
     workspace: "ImageStudio",
     provider: "flux",
-    complexity: "Medium",
+    complexity: "medium",
     quality: "Best",
     steps: [
   {

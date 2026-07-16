@@ -1,8 +1,9 @@
+import type { Provider } from "@/lib/provider/types";
+
 import {
   Complexity,
-  Provider,
-  SubscriptionPlan,
   Intent,
+  SubscriptionPlan,
 } from "./types";
 
 export function chooseProvider(
@@ -23,7 +24,7 @@ export function chooseProvider(
     return "gemini";
   }
 
- if (complexity === "high") {
+  if (complexity === "high") {
     return "openai";
   }
 

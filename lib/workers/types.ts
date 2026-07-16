@@ -1,3 +1,6 @@
+import { Task } from "@/lib/task/types";
+import { Provider } from "@/lib/provider/types";
+
 export type WorkerType =
   | "business"
   | "image"
@@ -6,28 +9,16 @@ export type WorkerType =
   | "website"
   | "research";
 
-export interface WorkerTask {
-  id: string;
-
-  title: string;
-
-  prompt: string;
-
-  provider: string;
-}
-
 export interface WorkerResult {
   success: boolean;
 
   output: string;
 
-  provider: string;
+  provider: Provider;
 }
 
 export interface Worker {
   type: WorkerType;
 
-  execute(
-    task: WorkerTask
-  ): Promise<WorkerResult>;
+  execute(task: Task): Promise<WorkerResult>;
 }

@@ -1,3 +1,5 @@
+import { Provider } from "@/lib/provider/types";
+
 export type SubscriptionPlan =
   | "free"
   | "creator"
@@ -19,13 +21,6 @@ export type Intent =
   | "app"
   | "general";
 
-export type Provider =
-  | "gemini"
-  | "openai"
-  | "groq"
-  | "image"
-  | "video";
-
 export type Quality =
   | "Fast"
   | "Balanced"
@@ -34,17 +29,17 @@ export type Quality =
 export type MissionStep = {
   id: number;
   title: string;
-  status: "waiting" | "running" | "completed" | "failed";
-  provider: string;
+  status: "waiting" | "running" | "completed";
+  provider: Provider;
 };
 
 export type Mission = {
   id: string;
   goal: string;
   workspace: string;
-  provider: string;
-  complexity: string;
-  quality: string;
+  provider: Provider;
+  complexity: Complexity;
+  quality: Quality;
   steps: MissionStep[];
 };
 
