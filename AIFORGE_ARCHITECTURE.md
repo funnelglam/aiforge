@@ -333,3 +333,149 @@ Before adding a new feature:
 2. Reuse existing modules whenever possible.
 3. Avoid creating duplicate files.
 4. Keep the architecture simple.
+
+# AIForge v2 Core Architecture
+
+## Execution Pipeline
+
+User
+    ↓
+AIForge Brain
+    ↓
+Mission Detection
+    ↓
+Execution Plan
+    ↓
+Executor
+    ↓
+Workers
+    ↓
+AI Router
+    ↓
+AI Provider
+    ↓
+Response
+
+
+
+## Shared Domain Models
+
+AIForge uses one canonical definition for every core business concept.
+
+lib/
+│
+├── task/
+│     types.ts
+│
+├── provider/
+│     types.ts
+│
+├── workers/
+│     types.ts
+│
+├── brain/
+│
+└── executor/
+
+No duplicated Task, Provider or Worker models are allowed.
+
+
+## Worker Architecture
+
+Each Worker has one responsibility.
+
+Business Worker
+Image Worker
+Video Worker
+Writing Worker
+Website Worker
+Research Worker
+
+Workers never communicate directly with AI providers.
+
+Workers always call:
+
+AI Router
+        ↓
+Provider
+
+
+## Executor
+
+The Executor does not contain business logic.
+
+Responsibilities:
+
+• Execute Tasks sequentially
+• Track Task status
+• Report progress
+• Dispatch Tasks to Workers
+
+The Executor never decides which AI model to use.
+
+
+## AI Router
+
+The AI Router chooses the provider.
+
+Example:
+
+Business
+        ↓
+OpenAI
+
+Image
+        ↓
+Flux
+
+Research
+        ↓
+Claude
+
+Simple Request
+        ↓
+Gemini
+
+Workers never choose providers.
+
+
+## Architecture Rules
+
+✓ One source of truth for every business model
+
+✓ Replace entire files during architecture migrations
+
+✓ Compile after every migration
+
+✓ Commit after every successful phase
+
+✓ No duplicate Provider definitions
+
+✓ No duplicate Task definitions
+
+✓ No circular dependencies
+
+✓ Brain decides
+
+✓ Executor executes
+
+✓ Worker performs
+
+✓ Router routes
+
+✓ Provider generates
+
+
+## AIForge Migration Rule
+
+Architecture migrations must be completed one layer at a time.
+
+For every migration:
+
+1. Replace the entire file.
+2. Run `npx tsc --noEmit`.
+3. Fix all compiler errors before continuing.
+4. Commit to Git.
+5. Only then move to the next layer.
+
+Never leave the project in a half-migrated state.
