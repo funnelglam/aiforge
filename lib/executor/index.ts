@@ -5,11 +5,23 @@ export async function executeJob(
   tasks: Task[],
   onUpdate: (tasks: Task[]) => void
 ) {
-  const updated = tasks.map((task) => ({ ...task }));
+  const updated = tasks.map((task) => ({
+    ...task,
+  }));
 
   for (let i = 0; i < updated.length; i++) {
-    updated[i].status = "running";
-    onUpdate(updated.map((task) => ({ ...task })));
+    updated[i] = {
+      ...updated[i],
+      status: "running",
+      output: undefined,
+      error: undefined,
+    };
+
+    onUpdate(
+      updated.map((task) => ({
+        ...task,
+      }))
+    );
 
     try {
       const worker = getWorker(updated[i].type);
@@ -20,18 +32,40 @@ export async function executeJob(
         );
       }
 
-      await worker.execute(updated[i]);
+      const result = await worker.execute(updated[i]);
 
-      updated[i].status = "completed";
+      updated[i] = {
+        ...updated[i],
+        status: result.success
+          ? "completed"
+          : "failed",
+        output: result.output,
+        error: result.success
+          ? undefined
+          : result.output,
+      };
     } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Task execution failed.";
+
       console.error(
         `Task failed: ${updated[i].title}`,
         error
       );
 
-      updated[i].status = "failed";
+      updated[i] = {
+        ...updated[i],
+        status: "failed",
+        error: message,
+      };
     }
 
-    onUpdate(updated.map((task) => ({ ...task })));
+    onUpdate(
+      updated.map((task) => ({
+        ...task,
+      }))
+    );
   }
 }

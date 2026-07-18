@@ -14,14 +14,21 @@ export default function MissionProgress({
           key={task.id}
           className="rounded-xl bg-zinc-900 p-4"
         >
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-4">
             <span>{task.title}</span>
 
-            <span>
-              {task.status === "waiting" && "⚪"}
-              {task.status === "running" && "🟡"}
-              {task.status === "completed" && "✅"}
-              {task.status === "failed" && "🔴"}
+            <span className="shrink-0">
+              {task.status === "waiting" &&
+                "⚪ Waiting"}
+
+              {task.status === "running" &&
+                "🟡 Running"}
+
+              {task.status === "completed" &&
+                "✅ Completed"}
+
+              {task.status === "failed" &&
+                "🔴 Failed"}
             </span>
           </div>
 
@@ -38,6 +45,19 @@ export default function MissionProgress({
               }`}
             />
           </div>
+
+          {task.output && (
+            <div className="mt-4 whitespace-pre-wrap rounded-lg border border-zinc-700 bg-black p-4 text-sm leading-6 text-zinc-300">
+              {task.output}
+            </div>
+          )}
+
+          {task.error &&
+            task.error !== task.output && (
+              <div className="mt-4 whitespace-pre-wrap rounded-lg border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
+                {task.error}
+              </div>
+            )}
         </div>
       ))}
     </div>

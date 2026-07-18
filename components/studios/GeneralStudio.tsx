@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { executeJob } from "@/lib/executor";
+
+import { MissionRunner } from "@/lib/missions/MissionRunner";
 import { detectWorker } from "@/lib/workers/detectWorker";
+
 import type { Provider } from "@/lib/provider/types";
 import type { Task } from "@/lib/task/types";
 
@@ -10,12 +12,14 @@ type Props = {
   brain: any;
 };
 
+const missionRunner = new MissionRunner();
+
 export default function GeneralStudio({
   brain,
 }: Props) {
   const [running, setRunning] = useState(false);
 
-  const [tasks, setTasks] = useState<Task[]>(
+  const [tasks, setTasks] = useState<Task[]>(() =>
     brain.tasks.map(
       (title: string, index: number) => ({
         id: String(index + 1),
@@ -29,12 +33,19 @@ export default function GeneralStudio({
   );
 
   async function handleMission() {
+    if (running || tasks.length === 0) {
+      return;
+    }
+
     setRunning(true);
 
     try {
-      await executeJob(tasks, (updated) => {
-        setTasks(updated);
-      });
+      await missionRunner.run(
+        tasks,
+        (updatedTasks) => {
+          setTasks(updatedTasks);
+        }
+      );
     } finally {
       setRunning(false);
     }
@@ -61,10 +72,13 @@ export default function GeneralStudio({
             <span>
               {task.status === "waiting" &&
                 "⚪ Waiting"}
+
               {task.status === "running" &&
                 "🟡 Running"}
+
               {task.status === "completed" &&
                 "✅ Completed"}
+
               {task.status === "failed" &&
                 "🔴 Failed"}
             </span>
@@ -74,11 +88,17 @@ export default function GeneralStudio({
 
       <button
         onClick={handleMission}
-        disabled={running}
+        disabled={running || tasks.length === 0}
         className="mt-6 rounded-xl bg-violet-600 px-6 py-3 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {running ? "Running..." : "Start Mission"}
       </button>
+
+      {tasks.length === 0 && (
+        <p className="mt-4 text-sm text-zinc-500">
+        AIForge could not create an execution plan for this request.
+        </p>
+      )}
     </div>
   );
 }

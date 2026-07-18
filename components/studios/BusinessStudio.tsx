@@ -1,40 +1,47 @@
 "use client";
 
 import { useState } from "react";
+
 import MissionProgress from "../MissionProgress";
-import { executeJob } from "@/lib/executor";
+
+import { createMissionTasks } from "@/lib/missions/createMissionTasks";
+import { MissionRunner } from "@/lib/missions/MissionRunner";
+
 import type { Task } from "@/lib/task/types";
-import type { Provider } from "@/lib/provider/types";
 
 type Props = {
   brain: any;
 };
+
+const missionRunner = new MissionRunner();
 
 export default function BusinessStudio({
   brain,
 }: Props) {
   const [running, setRunning] = useState(false);
 
-  const [tasks, setTasks] = useState<Task[]>(
-    brain.tasks.map(
-      (title: string, index: number) => ({
-        id: String(index + 1),
-        title,
-        prompt: title,
-        type: "business",
-        provider: brain.provider as Provider,
-        status: "waiting",
-      })
-    )
-  );
+  const [tasks, setTasks] = useState<Task[]>(() => {
+    if (!brain.mission) {
+      return [];
+    }
+
+    return createMissionTasks(brain.mission);
+  });
 
   async function startMission() {
+    if (!brain.mission || running) {
+      return;
+    }
+
     setRunning(true);
 
     try {
-      await executeJob(tasks, (updated) => {
-        setTasks(updated);
-      });
+      await missionRunner.runMission(
+        brain.mission,
+        (updatedTasks) => {
+          setTasks(updatedTasks);
+        }
+      );
     } finally {
       setRunning(false);
     }
@@ -56,11 +63,17 @@ export default function BusinessStudio({
 
       <button
         onClick={startMission}
-        disabled={running}
+        disabled={running || !brain.mission}
         className="mt-8 rounded-xl bg-violet-600 px-6 py-3 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {running ? "Running..." : "Start Mission"}
       </button>
+
+      {!brain.mission && (
+        <p className="mt-4 text-sm text-red-400">
+          No business mission was found.
+        </p>
+      )}
     </div>
   );
 }

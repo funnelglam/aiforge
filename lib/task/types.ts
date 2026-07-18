@@ -14,4 +14,7 @@ export interface Task {
   type: WorkerType;
   provider: Provider;
   status: TaskStatus;
+
+  output?: string;
+  error?: string;
 }
