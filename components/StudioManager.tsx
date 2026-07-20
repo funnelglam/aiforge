@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
+import ChatWindow from "./ChatWindow";
+import PromptBox from "./PromptBox";
 import StudioRouter from "./StudioRouter";
 
 import type { Provider } from "@/lib/provider/types";
@@ -10,12 +16,17 @@ type Props = {
   goal: string;
 };
 
+type Message = {
+  role: "user" | "assistant";
+  text: string;
+};
+
 type ForgeTask = {
   id: string;
   title: string;
   prompt: string;
   worker: string;
-  provider: Provider;
+  provider?: Provider;
 };
 
 type ForgeMission = {
@@ -39,171 +50,184 @@ type ForgeResponse = {
 export default function StudioManager({
   goal,
 }: Props) {
+  const initialGoalSent = useRef(false);
+
+  const [messages, setMessages] =
+    useState<Message[]>([]);
+
   const [result, setResult] =
     useState<ForgeResponse | null>(null);
 
   const [loading, setLoading] =
-    useState(true);
+    useState(false);
 
   const [error, setError] =
     useState<string | null>(null);
 
   useEffect(() => {
-    const controller = new AbortController();
-
-    async function forgeGoal() {
-      const prompt = goal.trim();
-
-      if (!prompt) {
-        setResult(null);
-        setError(
-          "Please enter a goal before opening Studio."
-        );
-        setLoading(false);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-      setResult(null);
-
-      try {
-        const response = await fetch(
-          "/api/forge",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify({
-              prompt,
-            }),
-
-            signal: controller.signal,
-          }
-        );
-
-        const data =
-          (await response.json()) as ForgeResponse;
-
-        if (!response.ok || !data.success) {
-          throw new Error(
-            data.error ||
-              "AIForge could not process this request."
-          );
-        }
-
-        setResult(data);
-      } catch (requestError) {
-        if (
-          requestError instanceof Error &&
-          requestError.name === "AbortError"
-        ) {
-          return;
-        }
-
-        setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "AIForge could not process this request."
-        );
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoading(false);
-        }
-      }
+    if (initialGoalSent.current) {
+      return;
     }
 
-    void forgeGoal();
+    const cleanGoal = goal.trim();
 
-    return () => {
-      controller.abort();
-    };
+    if (!cleanGoal) {
+      setError(
+        "Please enter a goal before opening Studio."
+      );
+
+      return;
+    }
+
+    initialGoalSent.current = true;
+
+    void sendMessage(cleanGoal);
   }, [goal]);
 
-  if (loading) {
-    return (
-      <div className="mt-6 rounded-2xl border border-violet-700/30 bg-gradient-to-r from-violet-950/40 to-zinc-900 p-8">
-        <div className="flex items-center gap-4">
-          <div className="animate-pulse text-3xl">
+  async function sendMessage(
+    text: string
+  ) {
+    const cleanText = text.trim();
+
+    if (!cleanText || loading) {
+      return;
+    }
+
+    const userMessage: Message = {
+      role: "user",
+      text: cleanText,
+    };
+
+    const conversation = [
+      ...messages,
+      userMessage,
+    ];
+
+    setMessages(conversation);
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const response = await fetch(
+        "/api/forge",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            messages: conversation,
+          }),
+        }
+      );
+
+      const data =
+        (await response.json()) as ForgeResponse;
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.error ||
+            "AIForge could not process this request."
+        );
+      }
+
+      setResult(data);
+
+      const assistantText =
+        createAssistantMessage(data);
+
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          text: assistantText,
+        },
+      ]);
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error
+          ? requestError.message
+          : "AIForge could not process this request.";
+
+      setError(message);
+
+      setMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          text:
+            `I could not complete that request.\n\n${message}`,
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="flex min-h-[calc(100vh-5rem)] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
+      <div className="border-b border-zinc-800 px-6 py-5">
+        <div className="flex items-center gap-3">
+          <div className="text-3xl">
             🧠
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold">
-              AIForge Brain
-            </h2>
+            <h1 className="text-2xl font-bold">
+              AIForge Studio
+            </h1>
 
-            <p className="mt-1 text-sm text-zinc-400">
-              Understanding your request...
+            <p className="text-sm text-zinc-400">
+              Ask, reply, refine, and continue.
             </p>
           </div>
         </div>
-
-        <div className="mt-8 space-y-3">
-          <LoadingBar />
-          <LoadingBar />
-          <LoadingBar />
-        </div>
       </div>
-    );
-  }
 
-  if (error) {
-    return (
-      <div className="mt-6 rounded-2xl border border-red-900 bg-red-950/20 p-8">
-        <h2 className="text-2xl font-bold text-red-300">
-          AIForge could not complete the request
-        </h2>
+      <ChatWindow messages={messages} />
 
-        <p className="mt-4 whitespace-pre-wrap text-red-200">
-          {error}
-        </p>
-
-        <div className="mt-6 rounded-xl bg-black/40 p-4">
-          <p className="text-sm text-zinc-500">
-            Your Goal
-          </p>
-
-          <p className="mt-2 text-white">
-            {goal}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!result) {
-    return null;
-  }
-
-  if (result.mode === "chat") {
-    return (
-      <div className="mt-6 rounded-2xl border border-violet-700/30 bg-gradient-to-r from-violet-950/40 to-zinc-900 p-8">
-        <BrainHeader
-          subtitle="Answer generated"
-        />
-
-        <BrainSummary
-          result={result}
-        />
-
-        <div className="mt-8 rounded-xl border border-zinc-800 bg-zinc-950 p-6">
-          <p className="text-sm font-medium text-violet-300">
-            AIForge
-          </p>
-
-          <div className="mt-4 whitespace-pre-wrap leading-8 text-zinc-200">
-            {result.answer ||
-              "AIForge returned an empty answer."}
+      {loading && (
+        <div className="px-8 pb-6">
+          <div className="max-w-3xl animate-pulse rounded-xl bg-zinc-800 p-4 text-zinc-400">
+            AIForge is thinking...
           </div>
         </div>
+      )}
 
-        <GoalCard goal={goal} />
-      </div>
+      {error && (
+        <div className="mx-8 mb-6 rounded-xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
+          {error}
+        </div>
+      )}
+
+      {result?.mode === "mission" &&
+        result.mission && (
+          <MissionSection
+            goal={goal}
+            result={result}
+          />
+        )}
+
+      <PromptBox
+        onSend={(text) => {
+          void sendMessage(text);
+        }}
+      />
+    </div>
+  );
+}
+
+function createAssistantMessage(
+  result: ForgeResponse
+) {
+  if (result.mode === "chat") {
+    return (
+      result.answer ||
+      "AIForge returned an empty answer."
     );
   }
 
@@ -211,134 +235,140 @@ export default function StudioManager({
     result.mode === "mission" &&
     result.mission
   ) {
-    const missionType =
-      getMissionType(result.workspace);
+    const tasks =
+      result.mission.tasks
+        .map(
+          (task, index) =>
+            `${index + 1}. ${task.title}`
+        )
+        .join("\n");
 
-    const provider =
-      result.provider ?? "gemini";
+    return [
+      result.reason ||
+        "I created a mission for your request.",
+      "",
+      `Mission: ${result.mission.title}`,
+      "",
+      tasks,
+    ].join("\n");
+  }
 
-    /*
-      Compatibility object for the existing
-      StudioRouter and Studio components.
+  return "AIForge returned an invalid response.";
+}
 
-      No existing names are changed.
-    */
-    const brain = {
-      prompt: goal,
+function MissionSection({
+  goal,
+  result,
+}: {
+  goal: string;
+  result: ForgeResponse;
+}) {
+  if (!result.mission) {
+    return null;
+  }
 
-      narrator:
-        result.reason ||
-        "AIForge created an execution plan for your goal.",
+  const provider =
+    result.provider ?? "gemini";
 
-      missionType,
+  const missionType =
+    getMissionType(result.workspace);
+
+  const brain = {
+    prompt: goal,
+
+    narrator:
+      result.reason ||
+      "AIForge created an execution plan for your goal.",
+
+    missionType,
+
+    complexity: "medium",
+
+    quality: "Balanced",
+
+    provider,
+
+    confidence:
+      result.confidence ?? 0,
+
+    tasks:
+      result.mission.tasks.map(
+        (task) => task.title
+      ),
+
+    executionPlan:
+      result.mission.tasks.map(
+        (task) => task.title
+      ),
+
+    mission: {
+      id: result.mission.id,
+
+      goal: result.mission.title,
+
+      workspace:
+        result.workspace ?? "general",
+
+      provider,
 
       complexity: "medium",
 
       quality: "Balanced",
 
-      provider,
-
-      confidence:
-        result.confidence ?? 0,
-
-      tasks:
+      steps:
         result.mission.tasks.map(
-          (task) => task.title
+          (task, index) => ({
+            id: index + 1,
+
+            title: task.title,
+
+            status: "waiting" as const,
+
+            provider:
+              task.provider ?? provider,
+          })
         ),
-
-      executionPlan:
-        result.mission.tasks.map(
-          (task) => task.title
-        ),
-
-      mission: {
-        id: result.mission.id,
-
-        goal: result.mission.title,
-
-        workspace:
-          result.workspace ?? "general",
-
-        provider,
-
-        complexity: "medium",
-
-        quality: "Balanced",
-
-        steps:
-          result.mission.tasks.map(
-            (task, index) => ({
-              id: index + 1,
-
-              title: task.title,
-
-              status: "waiting" as const,
-
-              provider:
-                task.provider ?? provider,
-            })
-          ),
-      },
-    };
-
-    return (
-      <div className="mt-6 rounded-2xl border border-violet-700/30 bg-gradient-to-r from-violet-950/40 to-zinc-900 p-6">
-        <BrainHeader
-          subtitle="Mission ready"
-        />
-
-        <div className="mt-8 leading-8 text-zinc-300">
-          <p>{brain.narrator}</p>
-        </div>
-
-        <BrainSummary
-          result={result}
-        />
-
-        <GoalCard goal={goal} />
-
-        <div className="mt-10">
-          <h3 className="text-2xl font-semibold">
-            Execution Plan
-          </h3>
-
-          <div className="mt-5 space-y-3">
-            {result.mission.tasks.map(
-              (task) => (
-                <div
-                  key={task.id}
-                  className="rounded-xl border border-zinc-800 bg-zinc-900 p-5"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <span>{task.title}</span>
-
-                    <span className="shrink-0 text-yellow-400">
-                      Pending
-                    </span>
-                  </div>
-                </div>
-              )
-            )}
-          </div>
-        </div>
-
-        <div className="mt-12">
-          <StudioRouter brain={brain} />
-        </div>
-      </div>
-    );
-  }
+    },
+  };
 
   return (
-    <div className="mt-6 rounded-2xl border border-red-900 bg-red-950/20 p-8">
-      <h2 className="text-2xl font-bold text-red-300">
-        Invalid AIForge response
-      </h2>
+    <div className="mx-8 mb-8 rounded-2xl border border-violet-800/40 bg-violet-950/20 p-6">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm text-violet-300">
+            Mission ready
+          </p>
 
-      <p className="mt-4 text-red-200">
-        AIForge did not return an answer or a
-        mission.
-      </p>
+          <h2 className="mt-1 text-2xl font-bold">
+            {result.mission.title}
+          </h2>
+        </div>
+
+        <div className="rounded-full bg-zinc-900 px-4 py-2 text-sm capitalize text-zinc-300">
+          {result.workspace ?? "general"}
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-3">
+        {result.mission.tasks.map(
+          (task, index) => (
+            <div
+              key={task.id}
+              className="rounded-xl border border-zinc-800 bg-zinc-900 p-4"
+            >
+              <span className="mr-3 text-zinc-500">
+                {index + 1}.
+              </span>
+
+              {task.title}
+            </div>
+          )
+        )}
+      </div>
+
+      <div className="mt-8">
+        <StudioRouter brain={brain} />
+      </div>
     </div>
   );
 }
@@ -359,99 +389,4 @@ function getMissionType(
     default:
       return "general";
   }
-}
-
-function BrainHeader({
-  subtitle,
-}: {
-  subtitle: string;
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <div className="text-3xl">🧠</div>
-
-      <div>
-        <h2 className="text-2xl font-bold">
-          AIForge Brain
-        </h2>
-
-        <p className="text-sm text-zinc-400">
-          {subtitle}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function BrainSummary({
-  result,
-}: {
-  result: ForgeResponse;
-}) {
-  return (
-    <div className="mt-8 grid gap-4 md:grid-cols-2">
-      <InfoCard title="Mode">
-        {result.mode ?? "unknown"}
-      </InfoCard>
-
-      <InfoCard title="Studio">
-        {result.workspace ?? "general"}
-      </InfoCard>
-
-      <InfoCard title="Provider">
-        {result.provider ?? "unknown"}
-      </InfoCard>
-
-      <InfoCard title="Confidence">
-        {Math.round(
-          (result.confidence ?? 0) * 100
-        )}
-        %
-      </InfoCard>
-    </div>
-  );
-}
-
-function GoalCard({
-  goal,
-}: {
-  goal: string;
-}) {
-  return (
-    <div className="mt-8 rounded-xl bg-zinc-900 p-5">
-      <p className="text-sm text-zinc-500">
-        Your Goal
-      </p>
-
-      <p className="mt-2 text-lg font-medium text-white">
-        {goal}
-      </p>
-    </div>
-  );
-}
-
-function InfoCard({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="rounded-xl bg-zinc-900 p-5">
-      <p className="text-sm text-zinc-500">
-        {title}
-      </p>
-
-      <div className="mt-2 text-xl font-bold capitalize text-white">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-function LoadingBar() {
-  return (
-    <div className="h-14 animate-pulse rounded-xl bg-zinc-900" />
-  );
 }
