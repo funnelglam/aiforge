@@ -1,20 +1,22 @@
 import "server-only";
 
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
 
+import { BRAIN_JSON_SCHEMA } from "./schema";
 import { BRAIN_SYSTEM_PROMPT } from "./prompt";
+
 import type { BrainResult } from "./types";
 
-function createOpenAIClient() {
-  const apiKey = process.env.OPENAI_API_KEY;
+function createGeminiClient() {
+  const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
     throw new Error(
-      "OPENAI_API_KEY is missing from .env.local."
+      "GEMINI_API_KEY is missing from .env.local."
     );
   }
 
-  return new OpenAI({
+  return new GoogleGenAI({
     apiKey,
   });
 }
@@ -25,34 +27,34 @@ export async function analyzePrompt(
   const cleanPrompt = prompt.trim();
 
   if (!cleanPrompt) {
-    throw new Error(
-      "A prompt is required."
-    );
+    throw new Error("A prompt is required.");
   }
 
-  const openai = createOpenAIClient();
+  const gemini = createGeminiClient();
 
   const response =
-    await openai.responses.create({
-      model: "gpt-5-mini",
+    await gemini.models.generateContent({
+      model: "gemini-3.5-flash",
 
-      instructions: `${BRAIN_SYSTEM_PROMPT}
+      contents: cleanPrompt,
 
-Return the result as valid json only.`,
+      config: {
+        systemInstruction:
+          BRAIN_SYSTEM_PROMPT,
 
-      input: `Analyze the following user request and return valid json only:
+        responseMimeType:
+          "application/json",
 
-${cleanPrompt}`,
+        responseJsonSchema:
+          BRAIN_JSON_SCHEMA,
 
-      text: {
-        format: {
-          type: "json_object",
-        },
+        temperature: 0.2,
+
+        maxOutputTokens: 4000,
       },
     });
 
-  const output =
-    response.output_text.trim();
+  const output = response.text?.trim();
 
   if (!output) {
     throw new Error(
@@ -61,10 +63,19 @@ ${cleanPrompt}`,
   }
 
   try {
-    return JSON.parse(output) as BrainResult;
+    const result =
+      JSON.parse(output) as BrainResult;
+
+    return {
+      ...result,
+
+      // Gemini is currently powering
+      // the development Brain.
+      provider: "gemini",
+    };
   } catch {
     console.error(
-      "Invalid Brain JSON:",
+      "Invalid Gemini Brain JSON:",
       output
     );
 
