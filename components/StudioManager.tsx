@@ -50,19 +50,19 @@ type ForgeResponse = {
 export default function StudioManager({
   goal,
 }: Props) {
-  const initialGoalSent = useRef(false);
+  const initialGoalSent =
+    useRef(false);
 
   const [messages, setMessages] =
     useState<Message[]>([]);
 
   const [result, setResult] =
-    useState<ForgeResponse | null>(null);
+    useState<ForgeResponse | null>(
+      null
+    );
 
   const [loading, setLoading] =
     useState(false);
-
-  const [error, setError] =
-    useState<string | null>(null);
 
   useEffect(() => {
     if (initialGoalSent.current) {
@@ -72,10 +72,6 @@ export default function StudioManager({
     const cleanGoal = goal.trim();
 
     if (!cleanGoal) {
-      setError(
-        "Please enter a goal before opening Studio."
-      );
-
       return;
     }
 
@@ -105,7 +101,6 @@ export default function StudioManager({
 
     setMessages(conversation);
     setLoading(true);
-    setError(null);
     setResult(null);
 
     try {
@@ -128,7 +123,10 @@ export default function StudioManager({
       const data =
         (await response.json()) as ForgeResponse;
 
-      if (!response.ok || !data.success) {
+      if (
+        !response.ok ||
+        !data.success
+      ) {
         throw new Error(
           data.error ||
             "AIForge could not process this request."
@@ -137,14 +135,14 @@ export default function StudioManager({
 
       setResult(data);
 
-      const assistantText =
-        createAssistantMessage(data);
-
       setMessages((current) => [
         ...current,
         {
           role: "assistant",
-          text: assistantText,
+          text:
+            createAssistantMessage(
+              data
+            ),
         },
       ]);
     } catch (requestError) {
@@ -153,14 +151,17 @@ export default function StudioManager({
           ? requestError.message
           : "AIForge could not process this request.";
 
-      setError(message);
-
       setMessages((current) => [
         ...current,
         {
           role: "assistant",
-          text:
-            `I could not complete that request.\n\n${message}`,
+          text: [
+            "I could not complete that request.",
+            "",
+            message,
+            "",
+            "Please try sending your message again.",
+          ].join("\n"),
         },
       ]);
     } finally {
@@ -170,7 +171,7 @@ export default function StudioManager({
 
   return (
     <div className="flex min-h-[calc(100vh-5rem)] flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950">
-      <div className="border-b border-zinc-800 px-6 py-5">
+      <div className="border-b border-zinc-800 px-5 py-4 md:px-6 md:py-5">
         <div className="flex items-center gap-3">
           <div className="text-3xl">
             🧠
@@ -182,29 +183,20 @@ export default function StudioManager({
             </h1>
 
             <p className="text-sm text-zinc-400">
-              Ask, reply, refine, and continue.
+              Ask, reply, refine, and
+              continue.
             </p>
           </div>
         </div>
       </div>
 
-      <ChatWindow messages={messages} />
+      <ChatWindow
+        messages={messages}
+        loading={loading}
+      />
 
-      {loading && (
-        <div className="px-8 pb-6">
-          <div className="max-w-3xl animate-pulse rounded-xl bg-zinc-800 p-4 text-zinc-400">
-            AIForge is thinking...
-          </div>
-        </div>
-      )}
-
-      {error && (
-        <div className="mx-8 mb-6 rounded-xl border border-red-900 bg-red-950/30 p-4 text-sm text-red-300">
-          {error}
-        </div>
-      )}
-
-      {result?.mode === "mission" &&
+      {result?.mode ===
+        "mission" &&
         result.mission && (
           <MissionSection
             goal={goal}
@@ -213,6 +205,7 @@ export default function StudioManager({
         )}
 
       <PromptBox
+        disabled={loading}
         onSend={(text) => {
           void sendMessage(text);
         }}
@@ -244,12 +237,16 @@ function createAssistantMessage(
         .join("\n");
 
     return [
+      `# ${result.mission.title}`,
+      "",
       result.reason ||
         "I created a mission for your request.",
       "",
-      `Mission: ${result.mission.title}`,
+      "## Execution Plan",
       "",
       tasks,
+      "",
+      "You can reply with changes or ask AIForge to continue.",
     ].join("\n");
   }
 
@@ -271,7 +268,9 @@ function MissionSection({
     result.provider ?? "gemini";
 
   const missionType =
-    getMissionType(result.workspace);
+    getMissionType(
+      result.workspace
+    );
 
   const brain = {
     prompt: goal,
@@ -304,10 +303,12 @@ function MissionSection({
     mission: {
       id: result.mission.id,
 
-      goal: result.mission.title,
+      goal:
+        result.mission.title,
 
       workspace:
-        result.workspace ?? "general",
+        result.workspace ??
+        "general",
 
       provider,
 
@@ -322,17 +323,19 @@ function MissionSection({
 
             title: task.title,
 
-            status: "waiting" as const,
+            status:
+              "waiting" as const,
 
             provider:
-              task.provider ?? provider,
+              task.provider ??
+              provider,
           })
         ),
     },
   };
 
   return (
-    <div className="mx-8 mb-8 rounded-2xl border border-violet-800/40 bg-violet-950/20 p-6">
+    <div className="mx-5 mb-6 rounded-2xl border border-violet-800/40 bg-violet-950/20 p-6 md:mx-8">
       <div className="flex items-center justify-between gap-4">
         <div>
           <p className="text-sm text-violet-300">
@@ -345,7 +348,8 @@ function MissionSection({
         </div>
 
         <div className="rounded-full bg-zinc-900 px-4 py-2 text-sm capitalize text-zinc-300">
-          {result.workspace ?? "general"}
+          {result.workspace ??
+            "general"}
         </div>
       </div>
 
@@ -367,7 +371,9 @@ function MissionSection({
       </div>
 
       <div className="mt-8">
-        <StudioRouter brain={brain} />
+        <StudioRouter
+          brain={brain}
+        />
       </div>
     </div>
   );
